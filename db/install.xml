@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/jwc2ical/db" VERSION="20120303" COMMENT="XMLDB file for Moodle local/jwc2ical"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="jwc_curriculum" COMMENT="Store all curriculum get from jwc here.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="class"/>
+        <FIELD NAME="class" TYPE="int" LENGTH="20" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="name"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="class" NEXT="teacher"/>
+        <FIELD NAME="teacher" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="name" NEXT="location"/>
+        <FIELD NAME="location" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" PREVIOUS="teacher" NEXT="repeats"/>
+        <FIELD NAME="repeats" TYPE="int" LENGTH="20" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="location" NEXT="time"/>
+        <FIELD NAME="time" TYPE="int" LENGTH="20" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="repeats" NEXT="length"/>
+        <FIELD NAME="length" TYPE="int" LENGTH="20" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="time"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="class" UNIQUE="false" FIELDS="class"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>
