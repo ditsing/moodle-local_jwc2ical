@@ -14,11 +14,11 @@ $action = optional_param( 'action', 'b', PARAM_ALPHA);
 echo $OUTPUT->header();
 if ( $action == 'update')
 {
-	jwc_cur_insert_events();
+	jwc2ical_cur_insert_events();
 }
 elseif ( $action == 'rollback')
 {
-	jwc_cur_delete_events();
+	jwc2ical_delete_events();
 }
 else
 {

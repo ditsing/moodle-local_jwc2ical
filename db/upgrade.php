@@ -43,7 +43,7 @@ function xmldb_local_jwc2ical_upgrade($oldversion) {
     global $DB;
 
     $dbman = $DB->get_manager(); // loads ddl manager and xmldb classes
-    $table = new xmldb_table( 'jwc_curriculum');
+    $table = new xmldb_table( 'jwc_schedule');
     if ( !$dbman->table_exists($table))
     {
 	    // Adding fields to table message_popup
@@ -57,7 +57,7 @@ function xmldb_local_jwc2ical_upgrade($oldversion) {
     }
 
     if ($oldversion < 2012030413) {
-	$talbe = new xmldb_table( 'jwc_curriculum');
+	$talbe = new xmldb_table( 'jwc_schedule');
 	$field = new xmldb_field( 'id', XMDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', '');
 	if ( !$dbman->field_exists( $table, $field))
 	{
