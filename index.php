@@ -14,7 +14,7 @@ $action = optional_param( 'action', 'b', PARAM_ALPHA);
 echo $OUTPUT->header();
 if ( $action == 'update')
 {
-	jwc2ical_cur_insert_events();
+	jwc2ical_insert_events();
 }
 elseif ( $action == 'rollback')
 {

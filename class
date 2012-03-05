@@ -172,7 +172,7 @@ foreach my $exam_node ( $exams_table->look_down( '_tag', 'td'))
 
 binmode( STDOUT, ":utf8");
 
-print "Class parts: @class_parts\n";
+print "Class_parts: @class_parts\n";
 foreach ( @classes)
 {
 	my %class = %$_;
@@ -184,7 +184,7 @@ foreach ( @classes)
 	print STDOUT "\n";
 }
 
-print "Exam parts: @exam_parts\n";
+print "Exam_parts: @exam_parts\n";
 foreach ( @exams)
 {
 	my %exam = %$_;
