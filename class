@@ -42,7 +42,7 @@ my $table_tree = HTML::TreeBuilder->new_from_content( decode( 'gbk', $table->con
 
 # Or I may need to find out tbody.
 my $real_table = $table_tree->look_down( '_tag', 'table', sub { $_[0]->content_list >= 7 } );
-print "Content-Type:text/html\n\nWrong class number!\n" and exit unless $real_table;
+die "Wrong class number!" unless $real_table;
 #print $real_table->as_text, "\n";
 
 my @classes;
