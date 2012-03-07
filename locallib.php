@@ -3,8 +3,40 @@
 #require_once( $CFG->dirroot . '/lib/moodlelib.php');
 #
 #
-$first_day = '2012-2-27';
 
+require_once( $CFG->dirroot . '/calendar/lib.php');
+
+$dt_filename = "dtstart";
+$dtstart = 0;
+
+function read_days( &$first_day, &$jwc_day)
+{
+	global $dt_filename;
+	$dt = fopen( $dt_filename, "r");
+	$first_day = rtrim( fgets( $dt));
+	$jwc_day = rtrim( fgets( $dt));
+	fclose( $dt);
+}
+
+function write_days( $first_day, $jwc_day)
+{
+	global $dt_filename;
+	$dt = fopen( $dt_filename, "w");
+	fputs( $dt, rtrim( $first_day) . "\n");
+	fputs( $dt, rtrim( $jwc_day) . "\n");
+	fclose( $dt);
+}
+
+function split_date( $day)
+{
+	$cur = explode( "-", $day);
+	$cur[1] = $cur[1] < 6 ? "春" : "秋";
+	return "$cur[0]年$cur[1]";
+}
+
+/* Make sure your code and the get_record return
+ * data in the same structrue.
+ */
 function fetch_new_class( $class, &$ret)
 {
 	echo "<p> fetching class $class </p> " ;
@@ -57,6 +89,7 @@ function fetch_new_class( $class, &$ret)
 function fetch_class( $class, &$ret)
 {
 	global $DB;
+	global $dtstart;
 	$ret = $DB->get_records( 'jwc_schedule', array( 'class' => $class));
 
 	if ( count( $ret) > 0)
@@ -77,13 +110,13 @@ function fetch_class( $class, &$ret)
 				$days = $data->week * 7 - 7 + $data->date;
 
 
-				$date = new DateTime( $first_day);
+				$date = new DateTime( $dtstart);
 
 				$s_time = explode( ":", $data->s_time);
 				++$s_time[1]; --$s_time[1]; // To prevent 00 appears.
 				$date->add( new DateInterval( "P${days}DT$s_time[0]H$s_time[1]M"));
 
-				$end = new DateTime( $first_day);
+				$end = new DateTime( $dtstart);
 
 				$t_time = explode( ":", $data->t_time);
 				++$t_time[1]; --$t_time[1];
@@ -131,6 +164,59 @@ function fetch_class( $class, &$ret)
 function jwc2ical_insert_events()
 {
 	echo "updating";
+	global $DB;
+	$now = time();
+	$errors = 0;
+	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address = \'0\'');
+	foreach ( $stus as $stu)
+	{
+		$class = '0903101';
+		$ret = fetch_class( $class, $events);
+		if ( $ret)
+		{
+			foreach ( $events as $event)
+			{
+				$entry = array (
+					"eventtype" 	=>	'user', #fixed value
+					"id" 	 	=>	0, #fixed value
+					"courseid" 	=>	0, #fixed value
+					"modulename" 	=>	0, #fixed value
+					"instance" 	=>	0, #fixed value
+					"action" 	=>	0, #fixed value
+					"duration" 	=>	2, #fixed value
+					"repeat" 	=>	1, #fixed value
+					"timemodified" 	=> 	$now,
+
+					"userid" 	=>	$stu->id, # Get from user information
+					"name" 		=>	$event->name,
+					"description" 	=>	array (
+						"text"		=> "location : $event->location teacher :$event->teacher",
+						"format" 	=> 1,
+						"itemid" 	=> 0
+					),
+					"timestart" 	=>	$event->time,    #time stamp
+					"repeats" 	=>	$event->repeats ? $event->repeats : 1,  #repeat times
+					"timeduration" 	=>	$event->length  #last, seconds
+				);
+				$cal = new calendar_event();
+				$cal->update( $entry, false);
+			}
+			echo "<p> $stu->idnumber done </p>";
+		}
+		else
+		{
+			echo "<p>Processing student $stu->idnumber failed, class is $class </p>" ;
+			++$errors;
+		}
+	}
+	if ( $errors !== 0)
+	{
+		echo "<p> $errors errors occured!</p>";
+	}
+	else
+	{
+		echo "<p> No error occured.</p>";
+	}
 }
 
 function jwc2ical_delete_events()
