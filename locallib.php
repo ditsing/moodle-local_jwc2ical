@@ -41,7 +41,6 @@ function fetch_new_class( $class, &$ret)
 {
 	echo "<p> fetching class $class </p> " ;
 	exec( "./class $class", $res, $ret);
-	echo "<p> get $ret </p>";
 	if ( $ret !== 0)
 	{
 		return false;
@@ -96,12 +95,12 @@ function fetch_class( $class, &$ret)
 	{
 		if ( reset( $ret)->name == 'failed')
 		{
-			$ret = array();
 			return false;
 		}
 	}
 	else
 	{
+		$ret = array();
 		$exist = fetch_new_class( $class, $virgin);
 		if ( $exist)
 		{
@@ -123,7 +122,7 @@ function fetch_class( $class, &$ret)
 				$end->add( new DateInterval( "P${days}DT$t_time[0]H$t_time[1]M"));
 
 //				echo "<p> last record </p>";
-				$is_exam = $data->teacher ? 0 : 1;
+				$is_exam = $data->teacher == '' ? false : true;
 				$record = array(
 					'class' => $class,
 					'name' => $data->name,
@@ -136,11 +135,11 @@ function fetch_class( $class, &$ret)
 					// I do not found any php method to calculate that.
 				);
 
-				echo "<p>";
-				print_r( $record);
-				echo "</p>";
+//				echo "<p>";
+//				print_r( $record);
+//				echo "</p>";
 				$DB->insert_record( 'jwc_schedule', $record);
-				$ret[] = $record;
+				$ret[] = ( object) $record;
 			}
 		}
 		else
@@ -156,7 +155,6 @@ function fetch_class( $class, &$ret)
 			);
 			$DB->insert_record( 'jwc_schedule', $record);
 
-			$ret = array();
 			return false;
 		}
 	}
@@ -203,6 +201,7 @@ function jwc2ical_insert_events()
 					"repeats" 	=>	$event->repeats ? $event->repeats : 1,  #repeat times
 					"timeduration" 	=>	$event->length  #last, seconds
 				);
+
 				$cal = new calendar_event();
 				$cal->update( $entry, false);
 			}
