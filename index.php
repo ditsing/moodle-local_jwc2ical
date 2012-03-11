@@ -50,6 +50,7 @@ else
 		elseif ( $res !== $jwc_day)
 		{
 			$jwc_day = $res;
+			clear_jwc_table();
 			write_days( $first_day, $jwc_day);
 		}
 	}

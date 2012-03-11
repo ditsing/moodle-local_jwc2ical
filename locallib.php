@@ -231,3 +231,10 @@ function jwc2ical_delete_events()
 	// Test this brute method.
 	$DB->delete_records( 'event', array( 'modulename' => 'jwc2ical'.$dtstart));
 }
+
+function clear_jwc_table()
+{
+	global $DB;
+	//Delete all thing from db.
+	$DB->delete_records( 'jwc_schedule', array());
+}
