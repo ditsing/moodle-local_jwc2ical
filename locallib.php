@@ -123,6 +123,7 @@ function fetch_class( $class, &$ret)
 				$end->add( new DateInterval( "P${days}DT$t_time[0]H$t_time[1]M"));
 
 //				echo "<p> last record </p>";
+				$is_exam = $data->teacher ? 0 : 1;
 				$record = array(
 					'class' => $class,
 					'name' => $data->name,
@@ -131,7 +132,8 @@ function fetch_class( $class, &$ret)
 					'repeats' => ( $data->repeats ? $data->repeats : 1),
 					'time' => $date->getTimestamp(),
 //					'length' => $date->diff( $end)->format("%s")
-					'length' => 105*60*60 // I do not found any php method to calculate that.
+					'length' => $is_exam ? 105*60*60 : 120*60*60
+					// I do not found any php method to calculate that.
 				);
 
 				echo "<p>";
@@ -165,14 +167,17 @@ function jwc2ical_insert_events()
 {
 	echo "updating";
 	global $DB;
+	global $dtstart;
+	$name_stamp = 'jwc2ical'.$dtstart;
+
 	$now = time();
 	$errors = 0;
 	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address = \'0\'');
 	foreach ( $stus as $stu)
 	{
-		$class = '0903101';
-		$ret = fetch_class( $class, $events);
-		if ( $ret)
+		$class = $stu->department;
+		$flag = fetch_class( $class, $events);
+		if ( $flag)
 		{
 			foreach ( $events as $event)
 			{
@@ -180,7 +185,7 @@ function jwc2ical_insert_events()
 					"eventtype" 	=>	'user', #fixed value
 					"id" 	 	=>	0, #fixed value
 					"courseid" 	=>	0, #fixed value
-					"modulename" 	=>	0, #fixed value
+					"modulename" 	=>	$name_stamp, #fixed value
 					"instance" 	=>	0, #fixed value
 					"action" 	=>	0, #fixed value
 					"duration" 	=>	2, #fixed value
@@ -222,4 +227,8 @@ function jwc2ical_insert_events()
 function jwc2ical_delete_events()
 {
 	echo "rolling back";
+	global $DB;
+	global $dtstart;
+	// Test this brute method.
+	$DB->delete_records( 'event', array( 'modulename' => 'jwc2ical'.$dtstart));
 }

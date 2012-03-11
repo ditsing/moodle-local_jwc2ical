@@ -25,8 +25,14 @@ if ( $action == 'update')
 }
 elseif ( $action == 'rollback')
 {
+	global $dtstart;
+	$dtstart = $first_day;
+	echo "本学期第一个周一是：$dtstart";
+	echo "<p> 如果上述信息有问题，请检查/local/jwc2ical/dtstart文件</p>";
+
 	jwc2ical_delete_events();
 	write_days( "0-0-0", $jwc_day);
+	$dtstart = "0-0-0";
 }
 else
 {
@@ -61,8 +67,8 @@ else
 
 	echo $render->box( $info_str);
 	echo html_writer::start_tag( 'ul');
-	echo html_writer::tag( 'li', html_writer::link( $url . '?action=update', '更新') . ':' . "将教务处的课程表插入数据库中 请在确认教务处已有新课程表后再更新！");
-	echo html_writer::tag( 'li', html_writer::link( $url . '?action=rollback', '回滚') . ':' . "删除上一次由本插件加入的所有条目 不可退回的操作，请慎重！");
+	echo html_writer::tag( 'li', html_writer::link( $url . '?action=update', '更新') . ':' . "将教务处的课程表插入数据库中<p><strong>请在确认教务处已有新课程表后再更新。</strong></p>");
+	echo html_writer::tag( 'li', html_writer::link( $url . '?action=rollback', '回滚') . ':' . "删除上一次由本插件加入的所有条目 <p> <strong>不可退回的操作，请慎重。<strong> </p>");
 	echo html_writer::end_tag( 'ul');
 }
 echo $OUTPUT->footer();
