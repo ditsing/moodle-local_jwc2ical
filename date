@@ -1,0 +1,140 @@
+#!/usr/bin/perl -w
+# Usage
+# jwc2ical [class_num]
+# Examples: 	jwc2ical 0903101
+# 		jwc2ical 0903102 > 0903102.ics
+
+use strict;
+use LWP;
+use HTML::Tree;
+use HTML::TreeBuilder;
+use Encode;
+use utf8;
+
+my $browser = LWP::UserAgent->new;
+my $class_num = $ARGV[0];
+my $date_url = 'http://jwc.hit.edu.cn/jwc/displaytwo.asp?ID=202';
+my @num_name = qw{ 一 二 三 四 五 六 七 八 九 十 十一 十二};
+my @num_syb = ( "\x{2474}", "\x{2475}", "\x{2476}", "\x{2477}", "\x{2478}", "\x{2479}",
+	"\x{247A}", "\x{247B}", "\x{247C}", "\x{247D}", "\x{247E}", "\x{247F}", "\x{2480}",
+	"\x{2481}", "\x{2482}", "\x{2483}", "\x{2484}", "\x{2485}", "\x{2486}", "\x{2487}");
+my @day_name = ( "MO", "TU", "WE", "TH", "FR", "SA", "SU");
+
+my $date_table = $browser->get( $date_url);
+&check( $date_table, $date_url);
+# Now for date table.
+
+my $date_tree = HTML::TreeBuilder->new_from_content( decode( 'gbk', $date_table->content));
+
+# Only the head is needed.
+my $real_date = $date_tree->look_down( '_tag', 'thead');
+
+# Get years out.
+my $year_list = $real_date->look_down( '_tag', 'tr', sub { $_[0]->as_text =~ m/哈尔滨工业大学/});
+my $year = $year_list->as_text;
+$year =~ s/.*([\d]{4}).*/$1/;
+#print "year is $year.\n";
+
+my @month;
+my @month_length;
+
+my %look_for;
+foreach ( qw( 月 周 星期一 星期日))
+{
+	my $name = $_;
+	$look_for{$name} = sub {
+		bless $_[0], "HTML::Element";
+		($_[0]->content_list)[0]->as_text eq $name
+	};
+}
+
+# Get months out.
+my $month_list = $real_date->look_down( '_tag', 'tr', $look_for{ 月});
+#print $month_list->as_text, "\n";
+
+foreach ( ($month_list->content_list)[1..($month_list->content_list-1)])
+{
+	push @month, &find( [ @num_name], $_->as_text);
+	push @month_length, defined $_->attr( 'colspan') ? $_->attr( 'colspan') : 1;
+}
+#print "@month_length\n";
+
+# Get weeks out.
+my $week_list = $real_date->look_down( '_tag', 'tr', $look_for{ 周});
+my @weeks;
+my @weeks_length;
+
+foreach ( ( $week_list->content_list)[1..($week_list->content_list-1)])
+{
+	my $num = &find( [ @num_syb], $_->as_text);
+	push @weeks, $num ? $num + 100 : $_->as_text;
+	push @weeks_length, defined $_->attr( 'colspan') ? $_->attr( 'colspan') : 1;
+}
+#print "@weeks", "\n";
+
+foreach ( 1..@month_length)
+{
+	$month_length[$_] += $month_length[$_-1];
+}
+
+foreach( 1..@weeks_length)
+{
+	$weeks_length[$_] += $weeks_length[$_-1];
+}
+
+die "Not so useful date html ". ( scalar $weeks_length[-1]) . " and $month_length[-1]", "\n"
+	if $weeks_length[-1] != $month_length[-1];
+
+# Get dates of mondays and sundays out.
+my @monday_dates;
+my $monday_list = $real_date->look_down( '_tag', 'tr', $look_for{ 星期一});
+
+foreach ( ( $monday_list->content_list)[1..($monday_list->content_list-1)])
+{
+	push @monday_dates, $_->as_text;
+}
+
+my @sunday_dates;
+my $sunday_list = $real_date->look_down( '_tag', 'tr', $look_for{ 星期日});
+
+foreach ( ( $sunday_list->content_list)[1..($sunday_list->content_list-1)])
+{
+	push @sunday_dates, $_->as_text;
+}
+
+# We only need the first monday here.
+my @first_monday;
+my $month = $month[0];
+
+# I gussed it!! This might be WRONG!!
+if ( $monday_dates[0] != $sunday_dates[0] - 6 && $monday_dates[0] > 28)
+{
+	# Some wrong date are present, egg pain.
+	--$year, $month = 12 if ( --$month == 0);
+}
+# Normal case
+print "$year-$month-$monday_dates[0]\n";
+exit;
+
+sub find
+{
+	my $num = $_[0];
+	foreach ( 1..@$num)
+	{
+		return $_ if ( $_[1] eq ${$num}[$_-1]);
+	}
+	return undef;
+}
+
+sub check
+{
+	my $response = $_[0];
+	my $url = $_[1];
+	die "$url error: ", $response->status_line unless $response->is_success;
+	die "Weird content type at $url -- ", $response->content_type
+		unless $response->content_type eq 'text/html';
+#	print $response->content;
+
+	return $response;
+}
+
