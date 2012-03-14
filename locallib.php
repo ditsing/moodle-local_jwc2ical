@@ -1,31 +1,8 @@
 <?php
 
 #require_once( $CFG->dirroot . '/lib/moodlelib.php');
-#
-#
 
 require_once( $CFG->dirroot . '/calendar/lib.php');
-
-$dt_filename = "dtstart";
-$dtstart = 0;
-
-function read_days( &$first_day, &$jwc_day)
-{
-	global $dt_filename;
-	$dt = fopen( $dt_filename, "r");
-	$first_day = rtrim( fgets( $dt));
-	$jwc_day = rtrim( fgets( $dt));
-	fclose( $dt);
-}
-
-function write_days( $first_day, $jwc_day)
-{
-	global $dt_filename;
-	$dt = fopen( $dt_filename, "w");
-	fputs( $dt, rtrim( $first_day) . "\n");
-	fputs( $dt, rtrim( $jwc_day) . "\n");
-	fclose( $dt);
-}
 
 function split_date( $day)
 {
@@ -85,10 +62,9 @@ function fetch_new_class( $class, &$ret)
 	return true;
 }
 
-function fetch_class( $class, &$ret)
+function fetch_class( $class, $dtstart, &$ret)
 {
 	global $DB;
-	global $dtstart;
 	$ret = $DB->get_records( 'jwc_schedule', array( 'class' => $class));
 
 	if ( count( $ret) > 0)
@@ -165,7 +141,7 @@ function jwc2ical_insert_events()
 {
 	echo "updating";
 	global $DB;
-	global $dtstart;
+	$dtstart = get_config( 'local_jwc2ical', 'jwc_version');
 	$name_stamp = 'jwc2ical'.$dtstart;
 
 	$now = time();
@@ -174,7 +150,7 @@ function jwc2ical_insert_events()
 	foreach ( $stus as $stu)
 	{
 		$class = $stu->department;
-		$flag = fetch_class( $class, $events);
+		$flag = fetch_class( $class, $dtstart, $events);
 		if ( $flag)
 		{
 			foreach ( $events as $event)
@@ -221,15 +197,18 @@ function jwc2ical_insert_events()
 	{
 		echo "<p> No error occured.</p>";
 	}
+
+	set_config( 'current_version', $dtstart, 'local_jwc2ical');
 }
 
 function jwc2ical_delete_events()
 {
 	echo "rolling back";
 	global $DB;
-	global $dtstart;
 	// Test this brute method.
+	$dtstart = get_config( 'local_jwc2ical', 'current_version');
 	$DB->delete_records( 'event', array( 'modulename' => 'jwc2ical'.$dtstart));
+	set_config( 'current_version', '0-0-0', 'local_jwc2ical');
 }
 
 function clear_jwc_table()

@@ -3,6 +3,7 @@ require_once( dirname(__FILE__) . '/../../config.php');
 require_once( $CFG->libdir . '/adminlib.php');
 require_once( $CFG->dirroot . '/local/jwc2ical/locallib.php');
 require_once( $CFG->dirroot . '/calendar/lib.php');
+require_once( $CFG->libdir . '/moodlelib.php');
 
 require_login();
 require_capability('moodle/site:config', get_context_instance(CONTEXT_SYSTEM));
@@ -10,32 +11,20 @@ admin_externalpage_setup('jwc2ical');
 
 $action = optional_param( 'action', '', PARAM_ALPHA);
 
-read_days( $first_day, $jwc_day);
-
 echo $OUTPUT->header();
 if ( $action == 'update')
 {
-	global $dtstart;
-	$dtstart = $jwc_day;
-	echo "本学期第一个周一是：$dtstart";
-	echo "<p> 如果上述信息有问题，请检查/local/jwc2ical/dtstart文件</p>";
-
 	jwc2ical_insert_events();
-	write_days( $jwc_day, $jwc_day);
 }
 elseif ( $action == 'rollback')
 {
-	global $dtstart;
-	$dtstart = $first_day;
-	echo "本学期第一个周一是：$dtstart";
-	echo "<p> 如果上述信息有问题，请检查/local/jwc2ical/dtstart文件</p>";
-
 	jwc2ical_delete_events();
-	write_days( "0-0-0", $jwc_day);
-	$dtstart = "0-0-0";
 }
 else
 {
+	$first_day = get_config( 'local_jwc2ical', 'current_version');
+	$jwc_day = get_config( 'local_jwc2ical', 'jwc_version');
+
 	$render = $PAGE->get_renderer('local_jwc2ical');
 	echo $render->heading( 'jwc2ical');
 
@@ -51,7 +40,7 @@ else
 		{
 			$jwc_day = $res;
 			clear_jwc_table();
-			write_days( $first_day, $jwc_day);
+			set_config( 'jwc_version', $jwc_day, 'local_jwc2ical');
 		}
 	}
 
