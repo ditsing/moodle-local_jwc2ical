@@ -113,6 +113,10 @@ function xmldb_local_jwc2ical_upgrade($oldversion) {
             $dbman->add_index( $table, $index);
         }
 
+
+	set_config( 'current_version', '0-0-0', 'local_jwc2ical');
+	set_config( 'jwc_version', '2012-2-27', 'local_jwc2ical');
+
         upgrade_plugin_savepoint(true, 2012030413, 'local_jwc2ical');
     }
 
