@@ -98,13 +98,13 @@ function fetch_class( $class, $dtstart, &$ret)
 				$end->add( new DateInterval( "P${days}DT$t_time[0]H$t_time[1]M"));
 
 //				echo "<p> last record </p>";
-				$is_exam = $data->teacher == '' ? false : true;
+				$is_exam = isset( $data->teacher) && $data->teacher !== '' ? false : true;
 				$record = array(
 					'class' => $class,
 					'name' => $data->name,
-					'teacher' => $data->teacher,
+					'teacher' => $is_exam ? "" : $data->teacher,
 					'location' => $data->location,
-					'repeats' => ( $data->repeats ? $data->repeats : 1),
+					'repeats' => ( !$is_exam && $data->repeats ? $data->repeats : 1),
 					'time' => $date->getTimestamp(),
 //					'length' => $date->diff( $end)->format("%s")
 					'length' => $is_exam ? 105*60*60 : 120*60*60
@@ -142,9 +142,9 @@ function jwc2ical_insert_events()
 	echo "updating";
 	global $DB;
 	$dtstart = get_config( 'local_jwc2ical', 'jwc_version');
-	$name_stamp = 'jwc2ical'.$dtstart;
 
 	$now = time();
+	set_config( 'timestamp', $now, 'local_jwc2ical');
 	$errors = 0;
 	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address = \'0\'');
 	foreach ( $stus as $stu)
@@ -159,7 +159,7 @@ function jwc2ical_insert_events()
 					"eventtype" 	=>	'user', #fixed value
 					"id" 	 	=>	0, #fixed value
 					"courseid" 	=>	0, #fixed value
-					"modulename" 	=>	$name_stamp, #fixed value
+					"modulename" 	=>	'', #fixed value
 					"instance" 	=>	0, #fixed value
 					"action" 	=>	0, #fixed value
 					"duration" 	=>	2, #fixed value
@@ -168,11 +168,12 @@ function jwc2ical_insert_events()
 
 					"userid" 	=>	$stu->id, # Get from user information
 					"name" 		=>	$event->name,
-					"description" 	=>	array (
-						"text"		=> "location : $event->location teacher :$event->teacher",
-						"format" 	=> 1,
-						"itemid" 	=> 0
-					),
+#					"description" 	=>	array (
+#						"text"		=> "location: $event->location teacher: $event->teacher",
+#						"format" 	=> 1,
+#						"itemid" 	=> 0
+#					),
+					"description" 	=>	"$event->location  $event->teacher",
 					"timestart" 	=>	$event->time,    #time stamp
 					"repeats" 	=>	$event->repeats ? $event->repeats : 1,  #repeat times
 					"timeduration" 	=>	$event->length  #last, seconds
@@ -181,7 +182,7 @@ function jwc2ical_insert_events()
 				$cal = new calendar_event();
 				$cal->update( $entry, false);
 			}
-			echo "<p> $stu->idnumber done </p>";
+			echo "<p> $stu->idnumber id $stu->id done </p>";
 		}
 		else
 		{
@@ -206,8 +207,64 @@ function jwc2ical_delete_events()
 	echo "rolling back";
 	global $DB;
 	// Test this brute method.
-	$dtstart = get_config( 'local_jwc2ical', 'current_version');
-	$DB->delete_records( 'event', array( 'modulename' => 'jwc2ical'.$dtstart));
+	$dtstart = get_config( 'local_jwc2ical', 'timestamp');
+#	$DB->delete_records( 'event', array( 'timemodified' => $dtstart));
+	$errors = 0;
+	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address = \'0\'');
+	foreach ( $stus as $stu)
+	{
+		$class = $stu->department;
+		$flag = fetch_class( $class, $dtstart, $events);
+		if ( $flag)
+		{
+			foreach ( $events as $event)
+			{
+				$entry = array (
+					"eventtype" 	=>	'user', #fixed value
+					"userid" 	=>	$stu->id, # Get from user information
+					"name" 		=>	$event->name,
+					"timestart" 	=>	$event->time,    #time stamp
+					"timeduration" 	=>	$event->length  #last, seconds
+				);
+				$id = $DB->get_records( 'event', $entry);
+//				print_r( $id);
+				if ( count( $id) > 0)
+				{
+					if ( count( $id) > 1)
+					{
+						echo "<p>More than one version exists: $id->name\n</p>";
+					}
+					foreach ( $id as $key => $val)
+					{
+						$repeatid = $val->repeatid;
+						$DB->delete_records( 'event', array( 'repeatid' => $repeatid));
+					}
+				}
+				else
+				{
+					echo"<p>";
+					print_r( $entry);
+					echo"</p>";
+					++$errors;
+				}
+
+			}
+			echo "<p> $stu->idnumber id $stu->id done </p>";
+		}
+		else
+		{
+			echo "<p>Processing student $stu->idnumber id $stu->id failed, class is $class </p>" ;
+			++$errors;
+		}
+	}
+	if ( $errors !== 0)
+	{
+		echo "<p> $errors errors occured!</p>";
+	}
+	else
+	{
+		echo "<p> No error occured.</p>";
+	}
 	set_config( 'current_version', '0-0-0', 'local_jwc2ical');
 }
 
