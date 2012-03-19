@@ -31,6 +31,8 @@
  * @see upgrade_plugins_modules()
  */
 function xmldb_local_jwc2ical_install() {
+	set_config( 'current_version', '0-0-0', 'local_jwc2ical');
+	set_config( 'jwc_version', '2012-2-27', 'local_jwc2ical');
 }
 
 /**
