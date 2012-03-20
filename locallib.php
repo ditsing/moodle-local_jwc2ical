@@ -16,7 +16,7 @@ function split_date( $day)
  */
 function fetch_new_class( $class, &$ret)
 {
-#	echo "<p> fetching class $class </p> " ;
+	echo "<p> fetching class $class </p> " ;
 	exec( "./class $class", $res, $ret);
 	if ( $ret !== 0)
 	{
@@ -139,7 +139,7 @@ function fetch_class( $class, $dtstart, &$ret)
 
 function jwc2ical_insert_events()
 {
-#	echo "updating";
+	echo "updating";
 	global $DB;
 	$dtstart = get_config( 'local_jwc2ical', 'jwc_version');
 
@@ -182,7 +182,7 @@ function jwc2ical_insert_events()
 				$cal = new calendar_event();
 				$cal->update( $entry, false);
 			}
-#			echo "<p> $stu->idnumber id $stu->id done </p>";
+			echo "<p> $stu->idnumber id $stu->id done </p>";
 		}
 		else
 		{
@@ -200,7 +200,7 @@ function jwc2ical_insert_events()
 
 function jwc2ical_delete_events()
 {
-#	echo "rolling back";
+	echo "rolling back";
 	global $DB;
 	// Test this brute method.
 	$dtstart = get_config( 'local_jwc2ical', 'timestamp');
@@ -243,7 +243,7 @@ function jwc2ical_delete_events()
 				}
 
 			}
-#			echo "<p> $stu->idnumber id $stu->id done </p>";
+			echo "<p> $stu->idnumber id $stu->id done </p>";
 		}
 		else
 		{
