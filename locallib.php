@@ -16,7 +16,7 @@ function split_date( $day)
  */
 function fetch_new_class( $class, &$ret)
 {
-	echo "<p> fetching class $class </p> " ;
+#	echo "<p> fetching class $class </p> " ;
 	exec( "./class $class", $res, $ret);
 	if ( $ret !== 0)
 	{
@@ -139,7 +139,7 @@ function fetch_class( $class, $dtstart, &$ret)
 
 function jwc2ical_insert_events()
 {
-	echo "updating";
+#	echo "updating";
 	global $DB;
 	$dtstart = get_config( 'local_jwc2ical', 'jwc_version');
 
@@ -182,21 +182,17 @@ function jwc2ical_insert_events()
 				$cal = new calendar_event();
 				$cal->update( $entry, false);
 			}
-			echo "<p> $stu->idnumber id $stu->id done </p>";
+#			echo "<p> $stu->idnumber id $stu->id done </p>";
 		}
 		else
 		{
-			echo "<p>Processing student $stu->idnumber failed, class is $class </p>" ;
+			error_log( "Processing student $stu->idnumber failed, class is $class");
 			++$errors;
 		}
 	}
 	if ( $errors !== 0)
 	{
-		echo "<p> $errors errors occured!</p>";
-	}
-	else
-	{
-		echo "<p> No error occured.</p>";
+		error_log( "$errors errors occured while inserting events!");
 	}
 
 	set_config( 'current_version', $dtstart, 'local_jwc2ical');
@@ -204,7 +200,7 @@ function jwc2ical_insert_events()
 
 function jwc2ical_delete_events()
 {
-	echo "rolling back";
+#	echo "rolling back";
 	global $DB;
 	// Test this brute method.
 	$dtstart = get_config( 'local_jwc2ical', 'timestamp');
@@ -242,28 +238,22 @@ function jwc2ical_delete_events()
 				}
 				else
 				{
-					echo"<p>";
-					print_r( $entry);
-					echo"</p>";
+					error_log( "Event $entry->name of $entry->userid not found!");
 					++$errors;
 				}
 
 			}
-			echo "<p> $stu->idnumber id $stu->id done </p>";
+#			echo "<p> $stu->idnumber id $stu->id done </p>";
 		}
 		else
 		{
-			echo "<p>Processing student $stu->idnumber id $stu->id failed, class is $class </p>" ;
+			error_log( "Processing student $stu->idnumber id $stu->id failed, class is $class");
 			++$errors;
 		}
 	}
 	if ( $errors !== 0)
 	{
-		echo "<p> $errors errors occured!</p>";
-	}
-	else
-	{
-		echo "<p> No error occured.</p>";
+		error_log( " $errors errors occured while deleting events!");
 	}
 	set_config( 'current_version', '0-0-0', 'local_jwc2ical');
 }
