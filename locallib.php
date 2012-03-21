@@ -68,6 +68,7 @@ function fetch_new_class( $class, &$ret)
 function fetch_class( $class, $dtstart, &$ret)
 {
 	global $DB;
+	echo "Looking for class $class.\n";
 	$ret = $DB->get_records( 'jwc_schedule', array( 'class' => $class));
 
 	if ( count( $ret) > 0)
@@ -216,6 +217,7 @@ function jwc2ical_delete_events()
 #	$DB->delete_records( 'event', array( 'timemodified' => $dtstart));
 	$errors = 0;
 	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address = \'0\'');
+	echo "Get all students done.\n";
 	foreach ( $stus as $stu)
 	{
 		$class = $stu->department;
