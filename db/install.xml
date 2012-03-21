@@ -7,7 +7,7 @@
     <TABLE NAME="jwc_schedule" COMMENT="Store all classes get from jwc here.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="class"/>
-        <FIELD NAME="class" TYPE="int" LENGTH="20" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="name"/>
+        <FIELD NAME="class" TYPE="char" LENGTH="20" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="name"/>
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="class" NEXT="teacher"/>
         <FIELD NAME="teacher" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" PREVIOUS="name" NEXT="location"/>
         <FIELD NAME="location" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" PREVIOUS="teacher" NEXT="repeats"/>
