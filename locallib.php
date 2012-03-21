@@ -150,7 +150,7 @@ function jwc2ical_insert_events()
 	$now = time();
 	set_config( 'timestamp', $now, 'local_jwc2ical');
 	$errors = 0;
-	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address = \'0\'');
+	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address != \'1\'');
 	foreach ( $stus as $stu)
 	{
 		$class = $stu->department;
