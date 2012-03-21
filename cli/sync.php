@@ -20,5 +20,5 @@ elseif ( $action == '-d')
 }
 else
 {
-	echo "Run with -i to insert, -d to delete events.";
+	echo "Run with -i to insert, -d to delete events.\n";
 }

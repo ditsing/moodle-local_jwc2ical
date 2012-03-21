@@ -3,6 +3,7 @@
 #require_once( $CFG->dirroot . '/lib/moodlelib.php');
 
 require_once( $CFG->dirroot . '/calendar/lib.php');
+$bin_path = $CFG->dirroot . '/local/jwc2ical';
 
 function split_date( $day)
 {
@@ -16,7 +17,9 @@ function split_date( $day)
  */
 function fetch_new_class( $class, &$ret)
 {
-	echo "<p> fetching class $class </p> " ;
+	echo "fetching class $class\n";
+	global $bin_path;
+	chdir( $bin_path);
 	exec( "./class $class", $res, $ret);
 	if ( $ret !== 0)
 	{
@@ -139,7 +142,7 @@ function fetch_class( $class, $dtstart, &$ret)
 
 function jwc2ical_insert_events()
 {
-	echo "updating";
+	echo "updating\n";
 	global $DB;
 	$dtstart = get_config( 'local_jwc2ical', 'jwc_version');
 
@@ -153,8 +156,11 @@ function jwc2ical_insert_events()
 		$flag = fetch_class( $class, $dtstart, $events);
 		if ( $flag)
 		{
+			//#echo "Get class\n";
+			//#$tmp_cnt = 0;
 			foreach ( $events as $event)
 			{
+				//#echo "building\n";
 				$entry = array (
 					"eventtype" 	=>	'user', #fixed value
 					"id" 	 	=>	0, #fixed value
@@ -179,10 +185,13 @@ function jwc2ical_insert_events()
 					"timeduration" 	=>	$event->length  #last, seconds
 				);
 
+				//#echo "On event $tmp_cnt\n";
 				$cal = new calendar_event();
 				$cal->update( $entry, false);
+				//#echo "Off event $tmp_cnt\n";
+				//#++$tmp_cnt;
 			}
-			echo "<p> $stu->idnumber id $stu->id done </p>";
+			echo "$stu->idnumber id $stu->id done\n";
 		}
 		else
 		{
@@ -200,7 +209,7 @@ function jwc2ical_insert_events()
 
 function jwc2ical_delete_events()
 {
-	echo "rolling back";
+	echo "rolling back\n";
 	global $DB;
 	// Test this brute method.
 	$dtstart = get_config( 'local_jwc2ical', 'timestamp');
@@ -228,7 +237,7 @@ function jwc2ical_delete_events()
 				{
 					if ( count( $id) > 1)
 					{
-						echo "<p>More than one version exists: $id->name\n</p>";
+						echo "More than one version exists: $id->name\n";
 					}
 					foreach ( $id as $key => $val)
 					{
@@ -243,7 +252,7 @@ function jwc2ical_delete_events()
 				}
 
 			}
-			echo "<p> $stu->idnumber id $stu->id done </p>";
+			echo "$stu->idnumber id $stu->id done\n";
 		}
 		else
 		{
@@ -255,6 +264,7 @@ function jwc2ical_delete_events()
 	{
 		error_log( " $errors errors occured while deleting events!");
 	}
+	clear_jwc_table();
 	set_config( 'current_version', '0-0-0', 'local_jwc2ical');
 }
 

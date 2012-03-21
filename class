@@ -147,7 +147,8 @@ foreach my $exam_node ( $exams_table->look_down( '_tag', 'td'))
 
 		# Say that the start time and end time are all two digits. Like 08:00-10:00.
 		# As far as I know, HIT never starts an exam at 8:00 in the morning.
-		$time =~ m/(\d\d):(\d\d)-(\d\d):(\d\d)/ or warn "Time format is not recognized: $time";
+		# 2012 Spring, class 1104101 happend!! NO!!!!
+		$time =~ m/(\d?\d):(\d\d)-(\d\d):(\d\d)/ or warn "Time format is not recognized: $time";
 		# This reg exp is NOT the same as before. See ':' and '：' ? 
 		
 		# Replace the string with a reference.
