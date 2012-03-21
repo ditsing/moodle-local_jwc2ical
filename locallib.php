@@ -111,7 +111,7 @@ function fetch_class( $class, $dtstart, &$ret)
 					'repeats' => ( !$is_exam && $data->repeats ? $data->repeats : 1),
 					'time' => $date->getTimestamp(),
 //					'length' => $date->diff( $end)->format("%s")
-					'length' => $is_exam ? 105*60*60 : 120*60*60
+					'length' => $is_exam ? 120*60 : 105*60
 					// I do not found any php method to calculate that.
 				);
 
@@ -151,6 +151,7 @@ function jwc2ical_insert_events()
 	set_config( 'timestamp', $now, 'local_jwc2ical');
 	$errors = 0;
 	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address != \'1\'');
+	echo "Get all students done.\n";
 	foreach ( $stus as $stu)
 	{
 		$class = $stu->department;
@@ -183,7 +184,8 @@ function jwc2ical_insert_events()
 					"description" 	=>	"$event->location  $event->teacher",
 					"timestart" 	=>	$event->time,    #time stamp
 					"repeats" 	=>	$event->repeats ? $event->repeats : 1,  #repeat times
-					"timeduration" 	=>	$event->length  #last, seconds
+					"timeduration" 	=>	$event->length, #last, seconds
+					"uuid" 		=>	'local_jwc2ical' # Stamp
 				);
 
 				//#echo "On event $tmp_cnt\n";
@@ -208,6 +210,7 @@ function jwc2ical_insert_events()
 	set_config( 'current_version', $dtstart, 'local_jwc2ical');
 }
 
+/*
 function jwc2ical_delete_events()
 {
 	echo "rolling back\n";
@@ -269,7 +272,15 @@ function jwc2ical_delete_events()
 	clear_jwc_table();
 	set_config( 'current_version', '0-0-0', 'local_jwc2ical');
 }
-
+ */
+function jwc2ical_delete_events()
+{
+	echo "rolling back\n";
+	global $DB;
+	$DB->delete_records( 'event', array( 'uuid' => 'local_jwc2ical'));
+	clear_jwc_table();
+	set_config( 'current_version', '0-0-0', 'local_jwc2ical');
+}
 function clear_jwc_table()
 {
 	global $DB;
