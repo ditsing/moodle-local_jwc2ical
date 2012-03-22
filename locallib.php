@@ -210,69 +210,6 @@ function jwc2ical_insert_events()
 	set_config( 'current_version', $dtstart, 'local_jwc2ical');
 }
 
-/*
-function jwc2ical_delete_events()
-{
-	echo "rolling back\n";
-	global $DB;
-	// Test this brute method.
-	$dtstart = get_config( 'local_jwc2ical', 'timestamp');
-#	$DB->delete_records( 'event', array( 'timemodified' => $dtstart));
-	$errors = 0;
-	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address = \'0\'');
-	echo "Get all students done.\n";
-	foreach ( $stus as $stu)
-	{
-		$class = $stu->department;
-		$flag = fetch_class( $class, $dtstart, $events);
-		if ( $flag)
-		{
-			foreach ( $events as $event)
-			{
-				$entry = array (
-					"eventtype" 	=>	'user', #fixed value
-					"userid" 	=>	$stu->id, # Get from user information
-					"name" 		=>	$event->name,
-					"timestart" 	=>	$event->time,    #time stamp
-					"timeduration" 	=>	$event->length  #last, seconds
-				);
-				$id = $DB->get_records( 'event', $entry);
-//				print_r( $id);
-				if ( count( $id) > 0)
-				{
-					if ( count( $id) > 1)
-					{
-						echo "More than one version exists: $id->name\n";
-					}
-					foreach ( $id as $key => $val)
-					{
-						$repeatid = $val->repeatid;
-						$DB->delete_records( 'event', array( 'repeatid' => $repeatid));
-					}
-				}
-				else
-				{
-					error_log( "Event $entry->name of $entry->userid not found!");
-					++$errors;
-				}
-
-			}
-			echo "$stu->idnumber id $stu->id done\n";
-		}
-		else
-		{
-			error_log( "Processing student $stu->idnumber id $stu->id failed, class is $class");
-			++$errors;
-		}
-	}
-	if ( $errors !== 0)
-	{
-		error_log( " $errors errors occured while deleting events!");
-	}
-	clear_jwc_table();
-	set_config( 'current_version', '0-0-0', 'local_jwc2ical');
-}
- */
 function jwc2ical_delete_events()
 {
 	echo "rolling back\n";
