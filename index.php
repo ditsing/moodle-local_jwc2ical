@@ -22,27 +22,19 @@ elseif ( $action == 'rollback')
 }
 else
 {
-	$first_day = get_config( 'local_jwc2ical', 'current_version');
-	$jwc_day = get_config( 'local_jwc2ical', 'jwc_version');
-
 	$render = $PAGE->get_renderer('local_jwc2ical');
 	echo $render->heading( 'jwc2ical');
 
 	if ( $action == 'refresh')
 	{
-		exec( "./date", $res, $ret);
-		$res = $res[0];
-		if ( $ret !== 0)
+		if ( !refresh_date())
 		{
 			echo "<p> 刷新失败，请重试！</p>";
 		}
-		elseif ( $res !== $jwc_day)
-		{
-			$jwc_day = $res;
-			clear_jwc_table();
-			set_config( 'jwc_version', $jwc_day, 'local_jwc2ical');
-		}
 	}
+
+	$first_day = get_config( 'local_jwc2ical', 'current_version');
+	$jwc_day = get_config( 'local_jwc2ical', 'jwc_version');
 
 	$cur_str = split_date( $first_day);
 	$jwc_str = split_date( $jwc_day);

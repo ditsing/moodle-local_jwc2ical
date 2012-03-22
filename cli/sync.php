@@ -8,11 +8,18 @@ require_once( $CFG->dirroot . '/local/jwc2ical/locallib.php');
 // Ensure errors are well explained
 $CFG->debug = DEBUG_NORMAL;
 
-
-$action = $_SERVER["argv"][1];
+$action = $_SERVER['argc'] ? $_SERVER["argv"][1] : '';
 if ( $action == '-i')
 {
-	jwc2ical_insert_events();
+	if ( !refresh_date())
+	{
+		echo "Refresh failed, make sure you have network connection.\n";
+		echo "Please rerun this scripte again later.\n";
+	}
+	else
+	{
+		jwc2ical_insert_events();
+	}
 }
 elseif ( $action == '-d')
 {

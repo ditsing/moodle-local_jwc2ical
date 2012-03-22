@@ -1,7 +1,5 @@
 <?php
 
-#require_once( $CFG->dirroot . '/lib/moodlelib.php');
-
 require_once( $CFG->dirroot . '/calendar/lib.php');
 $bin_path = $CFG->dirroot . '/local/jwc2ical';
 
@@ -60,7 +58,7 @@ function fetch_new_class( $class, &$ret)
 			$all[] = $$name;
 		}
 	}
-//	return array( 'classes' => $all_class, 'exams' => $all_exam);
+
 	$ret = $all;
 	return true;
 }
@@ -88,7 +86,6 @@ function fetch_class( $class, $dtstart, &$ret)
 			{
 				$days = $data->week * 7 - 7 + $data->date;
 
-
 				$date = new DateTime( $dtstart);
 
 				$s_time = explode( ":", $data->s_time);
@@ -101,7 +98,6 @@ function fetch_class( $class, $dtstart, &$ret)
 				++$t_time[1]; --$t_time[1];
 				$end->add( new DateInterval( "P${days}DT$t_time[0]H$t_time[1]M"));
 
-//				echo "<p> last record </p>";
 				$is_exam = isset( $data->teacher) && $data->teacher !== '' ? false : true;
 				$record = array(
 					'class' => $class,
@@ -115,9 +111,6 @@ function fetch_class( $class, $dtstart, &$ret)
 					// I do not found any php method to calculate that.
 				);
 
-//				echo "<p>";
-//				print_r( $record);
-//				echo "</p>";
 				$DB->insert_record( 'jwc_schedule', $record);
 				$ret[] = ( object) $record;
 			}
@@ -158,11 +151,8 @@ function jwc2ical_insert_events()
 		$flag = fetch_class( $class, $dtstart, $events);
 		if ( $flag)
 		{
-			//#echo "Get class\n";
-			//#$tmp_cnt = 0;
 			foreach ( $events as $event)
 			{
-				//#echo "building\n";
 				$entry = array (
 					"eventtype" 	=>	'user', #fixed value
 					"id" 	 	=>	0, #fixed value
@@ -176,11 +166,6 @@ function jwc2ical_insert_events()
 
 					"userid" 	=>	$stu->id, # Get from user information
 					"name" 		=>	$event->name,
-#					"description" 	=>	array (
-#						"text"		=> "location: $event->location teacher: $event->teacher",
-#						"format" 	=> 1,
-#						"itemid" 	=> 0
-#					),
 					"description" 	=>	"$event->location  $event->teacher",
 					"timestart" 	=>	$event->time,    #time stamp
 					"repeats" 	=>	$event->repeats ? $event->repeats : 1,  #repeat times
@@ -188,11 +173,8 @@ function jwc2ical_insert_events()
 					"uuid" 		=>	'local_jwc2ical' # Stamp
 				);
 
-				//#echo "On event $tmp_cnt\n";
 				$cal = new calendar_event();
 				$cal->update( $entry, false);
-				//#echo "Off event $tmp_cnt\n";
-				//#++$tmp_cnt;
 			}
 			echo "$stu->idnumber id $stu->id done\n";
 		}
@@ -218,9 +200,31 @@ function jwc2ical_delete_events()
 	clear_jwc_table();
 	set_config( 'current_version', '0-0-0', 'local_jwc2ical');
 }
+
 function clear_jwc_table()
 {
 	global $DB;
 	//Delete all thing from db.
 	$DB->delete_records( 'jwc_schedule', array());
+}
+
+function refresh_date()
+{
+	global $bin_path;
+	chdir( $bin_path);
+	$jwc_day = get_config( 'local_jwc2ical', 'jwc_version');
+	exec( "./date", $res, $ret);
+	$res = $res[0];
+	if ( $ret !== 0)
+	{
+		return false;
+	}
+	elseif ( $res !== $jwc_day)
+	{
+		$jwc_day = $res;
+		echo "refreshed date: $jwc_day\n";
+		clear_jwc_table();
+		set_config( 'jwc_version', $jwc_day, 'local_jwc2ical');
+	}
+	return true;
 }
