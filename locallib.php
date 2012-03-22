@@ -2,6 +2,7 @@
 
 require_once( $CFG->dirroot . '/calendar/lib.php');
 $bin_path = $CFG->dirroot . '/local/jwc2ical';
+define( "PNAME", 'local_jwc2ical');
 
 function split_date( $day)
 {
@@ -82,38 +83,43 @@ function fetch_class( $class, $dtstart, &$ret)
 		$exist = fetch_new_class( $class, $virgin);
 		if ( $exist)
 		{
-			print_r( $virgin);
 			foreach( $virgin as $data)
 			{
 				$days = $data->week * 7 - 7 + $data->date;
 
-				$date = new DateTime( $dtstart);
+				try
+				{
+					$date = new DateTime( $dtstart);
 
-				$s_time = explode( ":", $data->s_time);
-				++$s_time[1]; --$s_time[1]; // To prevent 00 appears.
-				$date->add( new DateInterval( "P${days}DT$s_time[0]H$s_time[1]M"));
+					$s_time = explode( ":", $data->s_time);
+					++$s_time[1]; --$s_time[1]; // To prevent 00 appears.
+					$date->add( new DateInterval( "P${days}DT$s_time[0]H$s_time[1]M"));
 
-				$end = new DateTime( $dtstart);
+					$end = new DateTime( $dtstart);
 
-				$t_time = explode( ":", $data->t_time);
-				++$t_time[1]; --$t_time[1];
-				$end->add( new DateInterval( "P${days}DT$t_time[0]H$t_time[1]M"));
+					$t_time = explode( ":", $data->t_time);
+					++$t_time[1]; --$t_time[1];
+					$end->add( new DateInterval( "P${days}DT$t_time[0]H$t_time[1]M"));
 
-				$is_exam = isset( $data->teacher) && $data->teacher !== '' ? false : true;
-				$record = array(
-					'class' => $class,
-					'name' => $data->name,
-					'teacher' => $is_exam ? "" : $data->teacher,
-					'location' => $data->location,
-					'repeats' => ( !$is_exam && $data->repeats ? $data->repeats : 1),
-					'time' => $date->getTimestamp(),
-//					'length' => $date->diff( $end)->format("%s")
-					'length' => $is_exam ? 120*60 : 105*60
-					// I do not found any php method to calculate that.
-				);
+					$is_exam = isset( $data->teacher) && $data->teacher !== '' ? false : true;
+					$record = array(
+						'class' => $class,
+						'name' => $data->name,
+						'teacher' => $is_exam ? "" : $data->teacher,
+						'location' => $data->location,
+						'repeats' => ( !$is_exam && $data->repeats ? $data->repeats : 1),
+						'time' => $date->getTimestamp(),
+						//					'length' => $date->diff( $end)->format("%s")
+						'length' => $is_exam ? 120*60 : 105*60
+						// I do not found any php method to calculate that.
+					);
 
-				$DB->insert_record( 'jwc_schedule', $record);
-				$ret[] = ( object) $record;
+					$DB->insert_record( 'jwc_schedule', $record);
+					$ret[] = ( object) $record;
+				} catch ( Exception $e)
+				{
+					echo "Aoh, something happened: ", $e->getMessage(), "\n";
+				}
 			}
 		}
 		else
@@ -139,10 +145,10 @@ function jwc2ical_insert_events()
 {
 	echo "updating\n";
 	global $DB;
-	$dtstart = get_config( 'local_jwc2ical', 'jwc_version');
+	$dtstart = get_config( PNAME, 'jwc_version');
 
 	$now = time();
-	set_config( 'timestamp', $now, 'local_jwc2ical');
+	set_config( 'timestamp', $now, PNAME);
 	$errors = 0;
 	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address != \'1\'');
 	echo "Get all students done.\n";
@@ -171,7 +177,7 @@ function jwc2ical_insert_events()
 					"timestart" 	=>	$event->time,    #time stamp
 					"repeats" 	=>	$event->repeats ? $event->repeats : 1,  #repeat times
 					"timeduration" 	=>	$event->length, #last, seconds
-					"uuid" 		=>	'local_jwc2ical' # Stamp
+					"uuid" 		=>	PNAME # Stamp
 				);
 
 				$cal = new calendar_event();
@@ -190,16 +196,16 @@ function jwc2ical_insert_events()
 		error_log( "$errors errors occured while inserting events!");
 	}
 
-	set_config( 'current_version', $dtstart, 'local_jwc2ical');
+	set_config( 'current_version', $dtstart, PNAME);
 }
 
 function jwc2ical_delete_events()
 {
 	echo "rolling back\n";
 	global $DB;
-	$DB->delete_records( 'event', array( 'uuid' => 'local_jwc2ical'));
+	$DB->delete_records( 'event', array( 'uuid' => PNAME));
 	clear_jwc_table();
-	set_config( 'current_version', '0-0-0', 'local_jwc2ical');
+	set_config( 'current_version', '0-0-0', PNAME);
 }
 
 function clear_jwc_table()
@@ -213,7 +219,7 @@ function refresh_date()
 {
 	global $bin_path;
 	chdir( $bin_path);
-	$jwc_day = get_config( 'local_jwc2ical', 'jwc_version');
+	$jwc_day = get_config( PNAME, 'jwc_version');
 	exec( "./date", $res, $ret);
 	$res = $res[0];
 	if ( $ret !== 0)
@@ -225,7 +231,7 @@ function refresh_date()
 		$jwc_day = $res;
 		echo "refreshed date: $jwc_day\n";
 		clear_jwc_table();
-		set_config( 'jwc_version', $jwc_day, 'local_jwc2ical');
+		set_config( 'jwc_version', $jwc_day, PNAME);
 	}
 	return true;
 }
