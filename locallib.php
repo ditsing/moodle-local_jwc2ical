@@ -33,7 +33,6 @@ function fetch_new_class( $class, &$ret)
 	$exam_flag = false;
 	foreach ( $res as $line)
 	{
-		$parts = explode( ' ', $line);
 		if ( strstr( $line, 'Class'))
 		{
 			$name = 'class';
@@ -49,6 +48,7 @@ function fetch_new_class( $class, &$ret)
 		}
 		else
 		{
+			$parts = explode( '`', $line);
 			$$name = new stdClass();
 			for ( $i = 1; $i < count( ${$name.'_parts'}); $i++)
 			{
@@ -82,6 +82,7 @@ function fetch_class( $class, $dtstart, &$ret)
 		$exist = fetch_new_class( $class, $virgin);
 		if ( $exist)
 		{
+			print_r( $virgin);
 			foreach( $virgin as $data)
 			{
 				$days = $data->week * 7 - 7 + $data->date;

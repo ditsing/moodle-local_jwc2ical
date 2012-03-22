@@ -180,7 +180,7 @@ foreach ( @classes)
 	print STDOUT "Class:";
 	foreach ( @class_parts)
 	{
-		print STDOUT " ", $_ =~ m/time/ ? $class{$_}[0].":".$class{$_}[1] : $class{$_};
+		print STDOUT "`", $_ =~ m/time/ ? $class{$_}[0].":".$class{$_}[1] : $class{$_};
 	}
 	print STDOUT "\n";
 }
@@ -192,7 +192,7 @@ foreach ( @exams)
 	print STDOUT "Exam:";
 	foreach ( @exam_parts)
 	{
-		print STDOUT " ", $_ =~ m/time/ ? $exam{$_}[0].":".$exam{$_}[1] : $exam{$_};
+		print STDOUT "`", $_ =~ m/time/ ? $exam{$_}[0].":".$exam{$_}[1] : $exam{$_};
 	}
 	print STDOUT "\n";
 }
