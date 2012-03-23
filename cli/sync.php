@@ -25,7 +25,11 @@ elseif ( $action == '-d')
 {
 	jwc2ical_delete_events();
 }
+elseif ( $action == '-f')
+{
+	jwc2ical_fix_corrupt( $_SERVER['argv'][2]);
+}
 else
 {
-	echo "Run with -i to insert, -d to delete events.\n";
+	echo "Run with -i to insert, -d to delete events, -f idnumber to fix corrupts.\n";
 }

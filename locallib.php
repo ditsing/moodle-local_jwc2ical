@@ -119,6 +119,7 @@ function fetch_class( $class, $dtstart, &$ret)
 				} catch ( Exception $e)
 				{
 					echo "Aoh, something happened: ", $e->getMessage(), "\n";
+					return false;
 				}
 			}
 		}
@@ -141,6 +142,110 @@ function fetch_class( $class, $dtstart, &$ret)
 	return true;
 }
 
+function insert_events_single( $stu, $dtstart, $now)
+{
+	$class = $stu->department;
+	$flag = fetch_class( $class, $dtstart, $events);
+	if ( $flag)
+	{
+		foreach ( $events as $event)
+		{
+			$entry = array (
+				"eventtype" 	=>	'user', #fixed value
+				"id" 	 	=>	0, #fixed value
+				"courseid" 	=>	0, #fixed value
+				"modulename" 	=>	'', #fixed value
+				"instance" 	=>	0, #fixed value
+				"action" 	=>	0, #fixed value
+				"duration" 	=>	2, #fixed value
+				"repeat" 	=>	1, #fixed value
+				"timemodified" 	=> 	$now,
+
+				"userid" 	=>	$stu->id, # Get from user information
+				"name" 		=>	$event->name,
+				"description" 	=>	"$event->location  $event->teacher",
+				"timestart" 	=>	$event->time,    #time stamp
+				"repeats" 	=>	$event->repeats ? $event->repeats : 1,  #repeat times
+				"timeduration" 	=>	$event->length, #last, seconds
+				"uuid" 		=>	PNAME # Stamp
+			);
+
+			$cal = new calendar_event();
+			$flag = $flag && $cal->update( $entry, false);
+		}
+		return $flag;
+	}
+	return false;
+}
+
+// Not tested yet!!!
+function fix_corrupt_single( $stu_idnumber)
+{
+	global $DB;
+	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address != \'1\'' . " AND idnumber = '$stu_idnumber'");
+	if ( count( $stus) == 1)
+	{
+		// Remove corrupted entries.
+		$stu = current( $stus);
+		$DB->delete_records( 'jwc_schedule', array( 'class' => $stu->department));
+		$DB->delete_records( 'event', array( 'userid' => $stu->id, 'uuid' => PNAME));
+
+		$dtstart = get_config( PNAME, 'jwc_version');
+		$now = time();
+		return insert_events_single( $stu, $dtstart, $now);
+	}
+	return false;
+}
+
+// From where are we corrupted? idnumber $stu_idnumber
+function jwc2ical_fix_corrupt( $stu_idnumber)
+{
+	echo "Fixing corrupts. If this script corrupts again, you can rerun it.\n";
+	global $DB;
+	if ( !fix_corrupt_single( $stu_idnumber))
+	{
+		echo "Are you sure $stu is the correct idnumber?";
+		return false;
+	}
+
+	$dtstart = get_config( PNAME, 'jwc_version');
+
+	$now = time();
+	set_config( 'timestamp', $now, PNAME);
+	$errors = 0;
+	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address != \'1\'');
+	echo "Get all students done.\n";
+
+	reset( $stus);
+	while ( current( $stus) && current( $stus)->idnumber !== $stu_idnumber)
+	{
+		next( $stus);
+	}
+
+	$errors = 0;
+	while ( ( $stu = current( $stus)))
+	{
+		$flag = insert_events_single( $stu, $dtstart, $now);
+		if ( $flag)
+		{
+			echo "$stu->idnumber id $stu->id done\n";
+		}
+		else
+		{
+			error_log( "Processing student $stu->idnumber id $stu->id failed, class is $stu->department");
+			++$errors;
+		}
+		next( $stus);
+	}
+	if ( $errors !== 0)
+	{
+		error_log( "$errors errors occured while inserting events!");
+	}
+
+	set_config( 'current_version', $dtstart, PNAME);
+	return true;
+}
+
 function jwc2ical_insert_events()
 {
 	echo "updating\n";
@@ -154,40 +259,14 @@ function jwc2ical_insert_events()
 	echo "Get all students done.\n";
 	foreach ( $stus as $stu)
 	{
-		$class = $stu->department;
-		$flag = fetch_class( $class, $dtstart, $events);
+		$flag = insert_events_single( $stu, $dtstart, $now);
 		if ( $flag)
 		{
-			foreach ( $events as $event)
-			{
-				$entry = array (
-					"eventtype" 	=>	'user', #fixed value
-					"id" 	 	=>	0, #fixed value
-					"courseid" 	=>	0, #fixed value
-					"modulename" 	=>	'', #fixed value
-					"instance" 	=>	0, #fixed value
-					"action" 	=>	0, #fixed value
-					"duration" 	=>	2, #fixed value
-					"repeat" 	=>	1, #fixed value
-					"timemodified" 	=> 	$now,
-
-					"userid" 	=>	$stu->id, # Get from user information
-					"name" 		=>	$event->name,
-					"description" 	=>	"$event->location  $event->teacher",
-					"timestart" 	=>	$event->time,    #time stamp
-					"repeats" 	=>	$event->repeats ? $event->repeats : 1,  #repeat times
-					"timeduration" 	=>	$event->length, #last, seconds
-					"uuid" 		=>	PNAME # Stamp
-				);
-
-				$cal = new calendar_event();
-				$cal->update( $entry, false);
-			}
 			echo "$stu->idnumber id $stu->id done\n";
 		}
 		else
 		{
-			error_log( "Processing student $stu->idnumber failed, class is $class");
+			error_log( "Processing student $stu->idnumber id $stu->id failed, class is $stu->department");
 			++$errors;
 		}
 	}
