@@ -3,7 +3,6 @@
 define('CLI_SCRIPT', true);
 
 require(dirname(dirname(dirname(dirname(__FILE__)))).'/config.php');
-require_once( $CFG->dirroot . '/local/jwc2ical/locallib.php');
 require_once( $CFG->dirroot . '/local/jwc2ical/lib.php');
 
 // Ensure errors are well explained

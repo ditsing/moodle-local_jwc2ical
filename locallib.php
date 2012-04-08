@@ -179,112 +179,16 @@ function insert_events_single( $stu, $dtstart, $now)
 }
 
 // Not tested yet!!!
-function fix_corrupt_single( $stu_idnumber)
+function fix_corrupt_single( $stu)
 {
 	global $DB;
-	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address != \'1\'' . " AND idnumber = '$stu_idnumber'");
-	if ( count( $stus) == 1)
-	{
-		// Remove corrupted entries.
-		$stu = current( $stus);
-		$DB->delete_records( 'jwc_schedule', array( 'class' => $stu->department));
-		$DB->delete_records( 'event', array( 'userid' => $stu->id, 'uuid' => PNAME));
-
-		$dtstart = get_config( PNAME, 'jwc_version');
-		$now = time();
-		return insert_events_single( $stu, $dtstart, $now);
-	}
-	return false;
-}
-
-// From where are we corrupted? idnumber $stu_idnumber
-function jwc2ical_fix_corrupt( $stu_idnumber)
-{
-	echo "Fixing corrupts. If this script corrupts again, you can rerun it.\n";
-	global $DB;
-	if ( !fix_corrupt_single( $stu_idnumber))
-	{
-		echo "Are you sure $stu is the correct idnumber?";
-		return false;
-	}
+	// Remove corrupted entries.
+	$DB->delete_records( 'jwc_schedule', array( 'class' => $stu->department));
+	$DB->delete_records( 'event', array( 'userid' => $stu->id, 'uuid' => PNAME));
 
 	$dtstart = get_config( PNAME, 'jwc_version');
-
 	$now = time();
-	set_config( 'timestamp', $now, PNAME);
-	$errors = 0;
-	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address != \'1\'');
-	echo "Get all students done.\n";
-
-	reset( $stus);
-	while ( current( $stus) && current( $stus)->idnumber !== $stu_idnumber)
-	{
-		next( $stus);
-	}
-
-	$errors = 0;
-	while ( ( $stu = current( $stus)))
-	{
-		$flag = insert_events_single( $stu, $dtstart, $now);
-		if ( $flag)
-		{
-			echo "$stu->idnumber id $stu->id done\n";
-		}
-		else
-		{
-			error_log( "Processing student $stu->idnumber id $stu->id failed, class is $stu->department");
-			++$errors;
-		}
-		next( $stus);
-	}
-	if ( $errors !== 0)
-	{
-		error_log( "$errors errors occured while inserting events!");
-	}
-
-	set_config( 'current_version', $dtstart, PNAME);
-	return true;
-}
-
-function jwc2ical_insert_events()
-{
-	echo "updating\n";
-	global $DB;
-	$dtstart = get_config( PNAME, 'jwc_version');
-
-	$now = time();
-	set_config( 'timestamp', $now, PNAME);
-	$errors = 0;
-	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address != \'1\'');
-	echo "Get all students done.\n";
-	foreach ( $stus as $stu)
-	{
-		$flag = insert_events_single( $stu, $dtstart, $now);
-		if ( $flag)
-		{
-			echo "$stu->idnumber id $stu->id done\n";
-		}
-		else
-		{
-			error_log( "Processing student $stu->idnumber id $stu->id failed, class is $stu->department");
-			++$errors;
-		}
-	}
-	if ( $errors !== 0)
-	{
-		error_log( "$errors errors occured while inserting events!");
-	}
-
-	set_config( 'current_version', $dtstart, PNAME);
-}
-
-function jwc2ical_delete_events()
-{
-	echo "rolling back\n";
-	global $DB;
-	$DB->delete_records( 'event', array( 'uuid' => PNAME));
-	clear_jwc_table();
-	set_config( 'current_version', '0-0-0', PNAME);
+	return insert_events_single( $stu, $dtstart, $now);
 }
 
 function clear_jwc_table()
@@ -292,25 +196,4 @@ function clear_jwc_table()
 	global $DB;
 	//Delete all thing from db.
 	$DB->delete_records( 'jwc_schedule', array());
-}
-
-function refresh_date()
-{
-	global $bin_path;
-	chdir( $bin_path);
-	$jwc_day = get_config( PNAME, 'jwc_version');
-	exec( "./date", $res, $ret);
-	$res = $res[0];
-	if ( $ret !== 0)
-	{
-		return false;
-	}
-	elseif ( $res !== $jwc_day)
-	{
-		$jwc_day = $res;
-		echo "refreshed date: $jwc_day\n";
-		clear_jwc_table();
-		set_config( 'jwc_version', $jwc_day, PNAME);
-	}
-	return true;
 }
