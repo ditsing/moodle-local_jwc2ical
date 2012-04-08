@@ -37,13 +37,10 @@ while ( my $line = <SC>)
 close SC;
 
 my $table_tree = HTML::TreeBuilder->new_from_content( decode( 'gbk', $table->content));
-#open(my $tfh, "<:encoding(gbk)", "kfx.htm") || die "no open tfh";
-#my $table_tree = HTML::TreeBuilder->new_from_file( $tfh);
 
 # Or I may need to find out tbody.
 my $real_table = $table_tree->look_down( '_tag', 'table', sub { $_[0]->content_list >= 7 } );
-die "Wrong class number!" unless $real_table;
-#print $real_table->as_text, "\n";
+die "Wrong class number $class_num!" unless $real_table;
 
 my @classes;
 my %courses;
@@ -71,18 +68,15 @@ foreach my $i ( 1..6)
 			# Some data contains empty lines, so if there is a <tr>, there is a valid class.
 			if ( $data->look_down( '_tag', 'tr'))
 			{
-#				print "$a, day $j: ", $data->as_text, "\n";
 				my @class_info = ();
 
 				# They put them into a table, too. Painfully.
 				foreach ( ( ( $data->look_down( '_tag', 'table'))[0])->content_list)
 				{
-#					print "\tnow : ", $_->as_text, "\n";
 
 					# Classes are sperated by <hr>s in each <tr>.
 					if ( $_->look_down( '_tag', 'hr'))
 					{
-#						print "Get @class_info at $a-$b\n";
 						&check_and_push( \@class_info, \@classes, $j - 1, $i - 1);
 					}
 					else
@@ -134,13 +128,19 @@ foreach my $exam_node ( $exams_table->look_down( '_tag', 'td'))
 	if ( not $exam_node->as_text eq '')
 	{
 		my @exam_info = split /\s+/, $exam_node->as_text;
+		#warn "Not expected data @exam_info" if @exam_info != 5;
+
 		# Format is: week, date, time, location, subject. 
-		#print "Get @exam_info\n";
-		warn "Not expected data @exam_info" if @exam_info != 5;
+		# There might be spaces in name of classes.
+		while ( @exam_info != 5)
+		{
+			$exam_info[-2] .= " " . $exam_info[-1];
+			pop @exam_info;
+		}
 
 		$exam_info[0] =~ s/第(\d*)周/$1/ or warn "No accure week";
 		$exam_info[1] =~ s/周日/周七/;
-		$exam_info[1] =~ s/周(\d*)/$1/ or warn( "No accure word on date"),;
+		$exam_info[1] =~ s/周(\d*)/$1/ or warn "No accure word on date";
 		$exam_info[1] = &find( [ @num_name], $exam_info[1]) or warn "No accure date";
 
 		my $time = $exam_info[2];
@@ -210,7 +210,7 @@ sub check_and_push
 		$_[0][3] = [ $1, $2];
 		push @{$_[0]}, $_[2], [ $class_times[$_[3]*2][0], $class_times[$_[3]*2+1][1]];
 
-		#A class is made up of six lines: Course Name, Teacher, Classroom, repeats, Date, Time.
+		#A class is made up of six lines: Course Name, Teacher, Classroom, Repeats, Date, Time.
 		my $class = {
 			name 		=> $_[0][0],
 			teacher 	=> $_[0][1],
