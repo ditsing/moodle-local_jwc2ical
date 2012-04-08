@@ -4,6 +4,7 @@ define('CLI_SCRIPT', true);
 
 require(dirname(dirname(dirname(dirname(__FILE__)))).'/config.php');
 require_once( $CFG->dirroot . '/local/jwc2ical/locallib.php');
+require_once( $CFG->dirroot . '/local/jwc2ical/lib.php');
 
 // Ensure errors are well explained
 $CFG->debug = DEBUG_NORMAL;
@@ -28,6 +29,10 @@ elseif ( $action == '-d')
 elseif ( $action == '-f')
 {
 	jwc2ical_fix_corrupt( $_SERVER['argv'][2]);
+}
+elseif ( $action == '-n')
+{
+	jwc2ical_update_new();
 }
 else
 {
