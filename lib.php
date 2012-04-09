@@ -12,16 +12,18 @@ function jwc2ical_update_array( $stus)
 	$now = time();
 
 	$errors = 0;
+	$cnt = 0;
 	foreach ( $stus as $stu)
 	{
 		$flag = insert_events_single( $stu, $dtstart, $now);
+		++$cnt;
 		if ( $flag)
 		{
-			echo "$stu->idnumber id $stu->id done\n";
+			echo "No.$cnt: $stu->idnumber id $stu->id done\n";
 		}
 		else
 		{
-			error_log( "Processing student $stu->idnumber id $stu->id failed, class is $stu->department");
+			error_log( "Processing No.$cnt student $stu->idnumber id $stu->id failed, class is $stu->department");
 			++$errors;
 		}
 	}
@@ -36,23 +38,25 @@ function jwc2ical_update_array( $stus)
 	return $errors;
 }
 
-function jwc2ical_update_new()
+function select_student( $str)
 {
 	global $DB;
+	return $DB->get_records_select( 'user', 'auth = \'cas\' AND address != \'1\' AND suspended = \'0\' AND deleted = \'0\'' . $str);
+}
 
-	echo "Updating new\n";
+function jwc2ical_update_new()
+{
 	$timestamp = get_config( PNAME, 'timestamp'); 
-	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address != \'1\'' . ' AND timecreated >= ' . $timestamp);
+	echo "Updating new user since " .  date( "r", $timestamp) . "\n";
+	$stus =  select_student( ' AND timecreated >= ' . $timestamp);
 
 	return jwc2ical_update_array( $stus);
 }
 
 function jwc2ical_insert_events()
 {
-	global $DB;
-
 	echo "Updating\n";
-	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address != \'1\'');
+	$stus =  select_student( "");
 
 	return jwc2ical_update_array( $stus);
 }
@@ -70,8 +74,7 @@ function jwc2ical_delete_events()
 function jwc2ical_fix_corrupt( $stu_idnumber)
 {
 	echo "Fixing corrupts. If this script corrupts again, you can rerun it.\n";
-	global $DB;
-	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address != \'1\'' . " AND idnumber = '$stu_idnumber'");
+	$stus = select_student( " AND idnumber = '$stu_idnumber'");
 
 	if ( count( $stus) != 1)
 	{
@@ -90,7 +93,7 @@ function jwc2ical_fix_corrupt( $stu_idnumber)
 		}
 	}
 
-	$stus =  $DB->get_records_select( 'user', 'auth = \'cas\' AND address != \'1\'' . ' AND id >= ' . current( $stu)->id);
+	$stus = select_student( ' AND id >= ' . current( $stu)->id);
 
 	return jwc_update_array( $stus);
 }
