@@ -11,12 +11,17 @@ function split_date( $day)
 	return "$cur[0]年$cur[1]";
 }
 
-/* Make sure your code and the get_record return
+/* 
+ * Make sure your code and the get_record return
  * data in the same structrue.
  */
 function fetch_new_class( $class, &$ret)
 {
-	echo "fetching class $class\n";
+
+	if ( debugging( '', DEBUG_DEVELOPER))
+	{
+		echo "Fetching class $class\n";
+	}
 	global $bin_path;
 	chdir( $bin_path);
 	exec( "./class $class", $res, $ret);
@@ -67,7 +72,11 @@ function fetch_new_class( $class, &$ret)
 function fetch_class( $class, $dtstart, &$ret)
 {
 	global $DB;
-	echo "Looking for class $class.\n";
+	if ( debugging( '', DEBUG_DEVELOPER))
+	{
+		echo "Looking for class $class.\n";
+	}
+
 	$ret = $DB->get_records( 'jwc_schedule', array( 'class' => $class));
 
 	if ( count( $ret) > 0)
@@ -118,7 +127,7 @@ function fetch_class( $class, $dtstart, &$ret)
 					$ret[] = ( object) $record;
 				} catch ( Exception $e)
 				{
-					echo "Aoh, something happened: ", $e->getMessage(), "\n";
+					error_log( "Aoh, something happened: ", $e->getMessage(), "\n");
 					return false;
 				}
 			}

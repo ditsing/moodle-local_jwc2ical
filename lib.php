@@ -5,7 +5,11 @@ function jwc2ical_update_array( $stus)
 {
 	global $DB;
 
-	echo "Get ". count( $stus) . " students.\n";
+	if ( debugging( '', DEBUG_DEVELOPER))
+	{
+		// This goes to command line output directly.
+		echo "Get ". count( $stus) . " students.\n";
+	}
 
 	$dtstart = get_config( PNAME, 'jwc_version');
 
@@ -19,7 +23,11 @@ function jwc2ical_update_array( $stus)
 		++$cnt;
 		if ( $flag)
 		{
-			echo "No.$cnt: $stu->idnumber id $stu->id done\n";
+			// This goes to command line output directly.
+			if ( debugging( '', DEBUG_DEVELOPER))
+			{
+				echo "No.$cnt: $stu->idnumber id $stu->id done\n";
+			}
 		}
 		else
 		{
@@ -48,7 +56,7 @@ function jwc2ical_update_new()
 {
 	$timestamp = get_config( PNAME, 'timestamp'); 
 	echo "Updating new user since " .  date( "r", $timestamp) . "\n";
-	$stus =  select_student( ' AND timecreated >= ' . $timestamp);
+	$stus = select_student( ' AND timecreated >= ' . $timestamp);
 
 	return jwc2ical_update_array( $stus);
 }
@@ -56,14 +64,14 @@ function jwc2ical_update_new()
 function jwc2ical_insert_events()
 {
 	echo "Updating\n";
-	$stus =  select_student( "");
+	$stus = select_student( "");
 
 	return jwc2ical_update_array( $stus);
 }
 
 function jwc2ical_delete_events()
 {
-	echo "rolling back\n";
+	echo "Rolling back\n";
 	global $DB;
 	$DB->delete_records( 'event', array( 'uuid' => PNAME));
 	clear_jwc_table();
@@ -101,10 +109,13 @@ function jwc2ical_fix_corrupt( $stu_idnumber)
 function refresh_date()
 {
 	global $bin_path;
+
 	chdir( $bin_path);
 	$jwc_day = get_config( PNAME, 'jwc_version');
+
 	exec( "./date", $res, $ret);
 	$res = $res[0];
+
 	if ( $ret !== 0)
 	{
 		return false;
@@ -112,9 +123,11 @@ function refresh_date()
 	elseif ( $res !== $jwc_day)
 	{
 		$jwc_day = $res;
-		echo "refreshed date: $jwc_day\n";
 		clear_jwc_table();
 		set_config( 'jwc_version', $jwc_day, PNAME);
+
+		echo "Refreshed date: $jwc_day\n";
 	}
+
 	return true;
 }
