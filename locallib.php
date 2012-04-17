@@ -15,7 +15,7 @@ function split_date( $day)
  * Make sure your code and the get_record return
  * data in the same structrue.
  */
-function fetch_new_class( $class, &$ret)
+function fetch_new_class( $class, $version, &$ret)
 {
 
 	if ( debugging( '', DEBUG_DEVELOPER))
@@ -60,6 +60,8 @@ function fetch_new_class( $class, &$ret)
 			{
 				${$name}->${$name.'_parts'}[$i] = $parts[$i];
 			}
+
+			$$name->version = $dtstart;
 			${'all_' . $name}[] = $$name;
 			$all[] = $$name;
 		}
@@ -77,7 +79,7 @@ function fetch_class( $class, $dtstart, &$ret)
 		echo "Looking for class $class.\n";
 	}
 
-	$ret = $DB->get_records( 'jwc_schedule', array( 'class' => $class));
+	$ret = $DB->get_records( 'jwc_schedule', array( 'version' => $dtstart, 'class' => $class));
 
 	if ( count( $ret) > 0)
 	{
@@ -89,7 +91,7 @@ function fetch_class( $class, $dtstart, &$ret)
 	else
 	{
 		$ret = array();
-		$exist = fetch_new_class( $class, $virgin);
+		$exist = fetch_new_class( $class, $dtstart, $virgin);
 		if ( $exist)
 		{
 			foreach( $virgin as $data)

@@ -13,9 +13,7 @@ use utf8;
 use encoding 'utf8';
 
 my $class_num = $ARGV[0];
-
 my $browser = LWP::UserAgent->new;
-#my $class_num = $ARGV[0];
 my $table_url = 'http://xscj.hit.edu.cn/Hitjwgl/XS/kfxqkb.asp';
 my @num_name = qw{ 一 二 三 四 五 六 七 八 九 十 十一 十二};
 my @class_parts = qw/ name teacher location week repeats date s_time t_time/;
@@ -47,11 +45,11 @@ my %courses;
 my %courses_table;
 #deprecated # @classes[lesson][day][count] represents a class. 
 
-# A class is made up of six lines: Course Name, Teacher, Classroom, Repeats, Date, Time.
+# A class is made up of five lines: Course Name, Teacher, Classroom, Date, Time.
 # @classes[count] represents a class, like $classes[0]{teacher}.
-# Repeats means how many times a class repeats.
-# Date means which day of the week.
+# Date means which week, which day, and what the interval is of the class.
 # Time means begin and end times, in the formate ( aa:bb, cc:dd).
+
 # We do have 6 big lessons everyday.
 foreach my $i ( 1..6)
 {
@@ -73,7 +71,6 @@ foreach my $i ( 1..6)
 				# They put them into a table, too. Painfully.
 				foreach ( ( ( $data->look_down( '_tag', 'table'))[0])->content_list)
 				{
-
 					# Classes are sperated by <hr>s in each <tr>.
 					if ( $_->look_down( '_tag', 'hr'))
 					{
@@ -167,11 +164,7 @@ foreach my $exam_node ( $exams_table->look_down( '_tag', 'td'))
 	}
 }
 
-#open EVENT, ">:encoding(utf8)", "/dev/shm/".$file_name.".ical.events" or print "Content-Type:text/html\n\nClasses not found!\n" and exit;
-#my @courses_list = sort keys %courses;
-#print EVENT "@courses_list\n";
 
-binmode( STDOUT, ":utf8");
 
 print "Class_parts: @class_parts\n";
 foreach ( @classes)
@@ -206,17 +199,39 @@ sub check_and_push
 	{
 		warn "Not expected data @{$_[0]}" if @{$_[0]} != 4;
 		my $weeks = $_[0][3];
-		warn "Not recognized weeks at $weeks" if not $weeks =~ m/(\d*)-(\d*)周/;
-		$_[0][3] = [ $1, $2];
+		warn "Not recognized weeks at $weeks" if not $weeks =~ m/(\d*)-(\d*)周(\s+[（(](双|单)[)）])*/;
+
+		# Deal with classes which is taken once every 2 weeks.
+		my ( $s, $t) = ( $1, $2);
+		if ( defined $3)
+		{
+			my $trail = $4 eq '双' ? 0 : $4 eq '单' ? 1 : -1;
+			# We should not get here.
+			warn "Any thing wrong with week at " . $_[0][0] . "?" if ( $trail == -1);
+
+			$s += 1 if $s % 2 != $trail;
+			$t -= 1 if $t % 2 != $trail;
+
+			warn "Wrong week of " . $_[0][0] if $s > $t;
+
+			$_[0][3] = [ $s, int( ( $t - $s) / 2) + 1, 2];
+		}
+		else
+		{
+			$_[0][3] = [ $s, $t - $s + 1, 1];
+		}
+
+		# Evenry big lesson last two period of time.
 		push @{$_[0]}, $_[2], [ $class_times[$_[3]*2][0], $class_times[$_[3]*2+1][1]];
 
-		#A class is made up of six lines: Course Name, Teacher, Classroom, Repeats, Date, Time.
+		# Split a class into nine parts, more clearly.
 		my $class = {
 			name 		=> $_[0][0],
 			teacher 	=> $_[0][1],
 			location 	=> $_[0][2],
 			week 		=> $_[0][3][0],
-			repeats		=> $_[0][3][1] - $_[0][3][0] + 1,
+			repeats		=> $_[0][3][1],
+			interval 	=> $_[0][3][2],
 			date 		=> $_[0][4],
 			s_time 		=> $_[0][5][0],
 			t_time 	  	=> $_[0][5][1],
