@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
  
-$plugin->version   = 2012032101;
+$plugin->version   = 2012041704;
 #$plugin->version   = 0;
 #$plugin->requires  = TODO; // See http://docs.moodle.org/dev/Moodle_Versions
 $plugin->component = 'local_jwc2ical';

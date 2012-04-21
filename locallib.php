@@ -61,7 +61,7 @@ function fetch_new_class( $class, $version, &$ret)
 				${$name}->${$name.'_parts'}[$i] = $parts[$i];
 			}
 
-			$$name->version = $dtstart;
+			$$name->version = $version;
 			${'all_' . $name}[] = $$name;
 			$all[] = $$name;
 		}
@@ -114,11 +114,13 @@ function fetch_class( $class, $dtstart, &$ret)
 
 					$is_exam = isset( $data->teacher) && $data->teacher !== '' ? false : true;
 					$record = array(
+						'version' => $data->version,
 						'class' => $class,
 						'name' => $data->name,
 						'teacher' => $is_exam ? "" : $data->teacher,
 						'location' => $data->location,
 						'repeats' => ( !$is_exam && $data->repeats ? $data->repeats : 1),
+						'inter' => $is_exam ? 1 : $data->interval,
 						'time' => $date->getTimestamp(),
 						//					'length' => $date->diff( $end)->format("%s")
 						'length' => $is_exam ? 120*60 : 105*60
@@ -129,7 +131,7 @@ function fetch_class( $class, $dtstart, &$ret)
 					$ret[] = ( object) $record;
 				} catch ( Exception $e)
 				{
-					error_log( "Aoh, something happened: ", $e->getMessage(), "\n");
+					error_log( "Aoh, something happened: " . $e->getMessage() . "\n");
 					return false;
 				}
 			}
@@ -137,11 +139,13 @@ function fetch_class( $class, $dtstart, &$ret)
 		else
 		{
 			$record = array(
+				'version' => $dtstart,
 				'class' => $class,
 				'name' => "failed",
 				'teacher' => NULL,
 				'location' => 0,
 				'repeats' => 0,
+				'inter' => 0,
 				'time' => 0,
 				'length' => 0
 			);
