@@ -122,7 +122,6 @@ function fetch_class( $class, $dtstart, &$ret)
 						'repeats' => ( !$is_exam && $data->repeats ? $data->repeats : 1),
 						'inter' => $is_exam ? 1 : $data->interval,
 						'time' => $date->getTimestamp(),
-						//					'length' => $date->diff( $end)->format("%s")
 						'length' => $is_exam ? 120*60 : 105*60
 						// I do not found any php method to calculate that.
 					);
@@ -157,6 +156,29 @@ function fetch_class( $class, $dtstart, &$ret)
 	return true;
 }
 
+function correct_entry( $repeatid, $inter)
+{
+	global $DB;
+	$records = $DB->get_records( 'event', array( 'repeatid' => $repeatid));
+	$list = array();
+	$times = array();
+	foreach( $records as $id => $value)
+	{
+		$time = $value->timestart;
+		$list[$time] = $id;
+		$times[] = $time;
+	}
+
+	sort( $times);
+	$cnt = 0;
+	foreach( $times as $time)
+	{
+		$DB->set_field( 'event', 'timestart', $time + WEEKSECS * $cnt,
+			array( 'id' => $list[$time]));
+		++$cnt;
+	}
+}
+
 function insert_events_single( $stu, $dtstart, $now)
 {
 	$class = $stu->department;
@@ -187,6 +209,10 @@ function insert_events_single( $stu, $dtstart, $now)
 
 			$cal = new calendar_event();
 			$flag = $flag && $cal->update( $entry, false);
+			if ( $event->inter == 2)
+			{
+				correct_entry( $cal->repeatid, $event->inter);
+			}
 		}
 		return $flag;
 	}
