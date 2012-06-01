@@ -171,11 +171,12 @@ function correct_entry( $repeatid, $inter)
 
 	sort( $times);
 	$cnt = 0;
+	--$inter;
 	foreach( $times as $time)
 	{
 		$DB->set_field( 'event', 'timestart', $time + WEEKSECS * $cnt,
 			array( 'id' => $list[$time]));
-		++$cnt;
+		$cnt += $inter;
 	}
 }
 
@@ -201,15 +202,15 @@ function insert_events_single( $stu, $dtstart, $now)
 				"userid" 	=>	$stu->id, # Get from user information
 				"name" 		=>	$event->name,
 				"description" 	=>	"$event->location  $event->teacher",
-				"timestart" 	=>	$event->time,    #time stamp
+				"timestart" 	=>	$event->time,
 				"repeats" 	=>	$event->repeats ? $event->repeats : 1,  #repeat times
-				"timeduration" 	=>	$event->length, #last, seconds
+				"timeduration" 	=>	$event->length, #in seconds
 				"uuid" 		=>	PNAME # Stamp
 			);
 
 			$cal = new calendar_event();
 			$flag = $flag && $cal->update( $entry, false);
-			if ( $event->inter == 2)
+			if ( $flag && $event->inter >= 2)
 			{
 				correct_entry( $cal->repeatid, $event->inter);
 			}
