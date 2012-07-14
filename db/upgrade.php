@@ -56,7 +56,7 @@ function xmldb_local_jwc2ical_upgrade($oldversion) {
 	    $dbman->create_table($table);
     }
 
-    if ($oldversion < 2012041704) {
+    if ($oldversion < 2012041705) {
 	$talbe = new xmldb_table( 'jwc_schedule');
 	$field = new xmldb_field( 'id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', '');
 	if ( !$dbman->field_exists( $table, $field))
@@ -100,7 +100,7 @@ function xmldb_local_jwc2ical_upgrade($oldversion) {
 		$dbman->add_field( $table, $field);
 	}
 
-        $field = new xmldb_field('inter', XMLDB_TYPE_INTEGER, '20', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, 'repeats');
+        $field = new xmldb_field('inter', XMLDB_TYPE_INTEGER, '20', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 1, 'repeats');
 	if ( !$dbman->field_exists( $table, $field))
 	{
 		$dbman->add_field( $table, $field);
@@ -124,7 +124,7 @@ function xmldb_local_jwc2ical_upgrade($oldversion) {
             $dbman->add_index( $table, $index);
         }
 
-        upgrade_plugin_savepoint(true, 2012041704, 'local_jwc2ical', 'db');
+        upgrade_plugin_savepoint(true, 2012041705, 'local_jwc2ical', 'db');
     }
 
     return true;
